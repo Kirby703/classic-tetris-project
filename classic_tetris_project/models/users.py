@@ -37,12 +37,9 @@ class User(models.Model):
     pal_pb = models.IntegerField(null=True)
     pal_pb_updated_at = models.DateTimeField(null=True)
 
-    pronouns = models.CharField(max_length=16, choices=PRONOUN_CHOICES.items(), default="they")
-
+    pronouns = models.CharField(max_length=16, choices=PRONOUN_CHOICES.items(), null=True)
     playstyle = models.CharField(max_length=16, null=True, choices=PLAYSTYLE_CHOICES.items())
-
     country = models.CharField(max_length=3, null=True)
-
     same_piece_sets = models.BooleanField(default=False)
 
     def set_pb(self, pb, pb_type="ntsc"):
