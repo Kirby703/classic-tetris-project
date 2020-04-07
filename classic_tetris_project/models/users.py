@@ -28,47 +28,21 @@ class User(models.Model):
     }
 
     preferred_name = models.CharField(max_length=64, null=True)
-
-    ntsc_pb = models.IntegerField(null=True)
-    ntsc_pb_updated_at = models.DateTimeField(null=True)
-    ntsc_pb_19 = models.IntegerField(null=True)
-    ntsc_pb_19_updated_at = models.DateTimeField(null=True)
-
-    pal_pb = models.IntegerField(null=True)
-    pal_pb_updated_at = models.DateTimeField(null=True)
-
     pronouns = models.CharField(max_length=16, choices=PRONOUN_CHOICES.items(), null=True)
     playstyle = models.CharField(max_length=16, null=True, choices=PLAYSTYLE_CHOICES.items())
     country = models.CharField(max_length=3, null=True)
     same_piece_sets = models.BooleanField(default=False)
 
-    def set_pb(self, pb, pb_type="ntsc"):
-        if pb_type == "pal":
-            self.pal_pb = pb
-            self.pal_pb_updated_at = timezone.now()
-            self.save()
-            return True
+    def add_pb(self, score, console_type="ntsc", starting_level=None, lines=None):
+        return self.score_pbs.create(score=score, console_type=console_type,
+                                        starting_level=starting_level, lines=lines)
 
-        elif pb_type == "ntsc":
-            self.ntsc_pb = pb
-            self.ntsc_pb_updated_at = timezone.now()
-            self.save()
-            return True
+    def get_pb(self, console_type="ntsc", level=None):
+        scope = self.score_pbs.filter(console_type=console_type)
+        if level is not None:
+            scope = scope.filter(level=level)
 
-        elif pb_type in ["19", "ntsc19"]:
-            self.ntsc_pb_19 = pb
-            ts = timezone.now()
-            self.ntsc_pb_19_updated_at = ts
-
-            if self.ntsc_pb is not None and self.ntsc_pb < pb:
-                self.ntsc_pb = pb
-                self.ntsc_pb_updated_at = ts
-
-            self.save()
-            return True
-
-        else:
-            return False
+        scope.last()
 
     def set_pronouns(self, pronoun):
         pronoun = pronoun.lower()

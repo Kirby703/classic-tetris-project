@@ -57,26 +57,32 @@ class GetPBCommand(Command):
 
 
 @Command.register("newpb", "setpb",
-                  usage="setpb <pb> [type=NTSC]")
+                  usage="setpb <score> [type=NTSC] [level]")
 class SetPBCommand(Command):
-    def execute(self, pb, pb_type="ntsc"):
+    def execute(self, score, console_type="ntsc", level=None):
         try:
-            pb = int(pb.replace(",", ""))
+            score = int(score.replace(",", ""))
+            if level is not None:
+                level = int(level)
         except ValueError:
             raise CommandException(send_usage=True)
 
-        pb_type = pb_type.lower()
+        if score < 0:
+            raise CommandException("Invalid PB.")
 
-        if pb < 0:
-            self.send_message("Invalid PB.")
-        elif pb > 1400000:
-            self.send_message("You wish, kid >.>")
-        else:
-            if self.context.user.set_pb(pb, pb_type):
-                self.send_message("{user_tag} has a new {pb_type} PB of {pb:,}!".format(
-                    user_tag=self.context.user_tag,
-                    pb_type=pb_type.upper(),
-                    pb=pb
-                ))
-            else:
-                self.send_message("Invalid PB type - must be NTSC or PAL (default NTSC)")
+        if score > 1400000:
+            raise CommandException("You wish, kid >.>")
+
+        if level is not None and (level < 0 or level > 29):
+            raise CommandException("Invalid level.")
+
+        console_type = console_type.lower()
+        if console_type != "ntsc" and console_type != "pal":
+            raise CommandException("Invalid PB type - must be NTSC or PAL (default NTSC)")
+
+        pb = self.context.user.add_pb(score, console_type=console_type, starting_level=level)
+        self.send_message("{user_tag} has a new {console_type} PB of {score:,}!".format(
+            user_tag=self.context.user_tag,
+            console_type=pb.get_console_type_display(),
+            score=pb.score
+        ))
